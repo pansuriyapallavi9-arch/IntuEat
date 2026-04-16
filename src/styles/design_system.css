@@ -1,0 +1,188 @@
+/* 
+  IntuEat Design System 
+  A premium, vibrant, and energetic UI (Dark Neon Glassmorphism)
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Colors - Light Earthy Pastel Palette */
+  --bg-base: #f7f9f2; /* Soft sage/off-white */
+  --bg-surface: rgba(255, 255, 255, 0.6); /* Translucent glass */
+  --bg-elevated: rgba(255, 255, 255, 0.95);
+  --bg-glass: rgba(142, 168, 137, 0.15); 
+  
+  --primary: #6c9a6a; /* Earthy sage green */
+  --primary-hover: #568155; 
+  --secondary: #dcae78; /* Soft clay/terracotta */
+  --accent: #f2ce8d; /* Warm pastel yellow */
+  
+  --text-main: #2b3a2f; /* Deep forest green */
+  --text-muted: #6b7a6f; /* Earthy olive-grey */
+  --text-inverse: #ffffff; /* White on filled shapes */
+  
+  --border-light: rgba(108, 154, 106, 0.2);
+  --border-medium: rgba(108, 154, 106, 0.4);
+
+  --error: #e06c75;
+  --success: #6c9a6a;
+  --info: #7daea3; 
+
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+  --space-12: 6rem;
+
+  /* Border Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 20px rgba(43, 58, 47, 0.08); /* Soft dark shadow */
+  --shadow-md: 0 10px 40px rgba(43, 58, 47, 0.12);
+  --shadow-glow: 0 0 25px rgba(108, 154, 106, 0.3);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base resets handled in global.css */
+
+/* Utility Classes */
+.glass-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+  transition: var(--transition-normal);
+}
+
+.glass-panel:hover {
+  border-color: rgba(108, 154, 106, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--shadow-md);
+}
+
+.title-gradient {
+  background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--text-inverse);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-shadow: 0 4px 15px rgba(108, 154, 106, 0.25);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-medium);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-glass);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 4px 15px rgba(108, 154, 106, 0.15);
+}
+
+.input-field {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  transition: var(--transition-fast);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(108, 154, 106, 0.2);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px) }
+  50% { transform: translateY(-10px) }
+  100% { transform: translateY(0px) }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
