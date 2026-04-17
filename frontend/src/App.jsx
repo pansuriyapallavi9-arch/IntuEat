@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Landing from './pages/Landing';
 import Onboarding from './pages/Onboarding';
@@ -11,7 +11,40 @@ import WaterIntake from './pages/dashboard/WaterIntake';
 import DeficiencySuggestions from './pages/dashboard/DeficiencySuggestions';
 import Analytics from './pages/dashboard/Analytics';
 import FloatingBackground from './components/FloatingBackground';
+import { UserContext } from './context/UserContext';
 import './styles/global.css';
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, authLoading } = useContext(UserContext);
+
+  if (authLoading) {
+    return <div className="flex-center" style={{ minHeight: '100vh', color: 'var(--text-muted)' }}>Loading your account...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+function OnboardingRoute() {
+  const { isAuthenticated, authLoading, user } = useContext(UserContext);
+
+  if (authLoading) {
+    return <div className="flex-center" style={{ minHeight: '100vh', color: 'var(--text-muted)' }}>Loading your account...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (user?.profileCompleted) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Onboarding />;
+}
 
 function App() {
   return (
@@ -21,10 +54,10 @@ function App() {
       
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/onboarding" element={<OnboardingRoute />} />
         
         {/* Dashboard Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="analytics" />} />
           <Route path="personal-info" element={<PersonalInfo />} />
           <Route path="meal-scanning" element={<MealScanning />} />

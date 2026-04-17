@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, ScanLine, Barcode, Clock, Droplets, Lightbulb, PieChart, LogOut, Sprout } from 'lucide-react';
+import { UserContext } from '../context/UserContext';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const { logout } = useContext(UserContext);
 
   const navItems = [
     { name: 'Personal Info', path: 'personal-info', icon: User },
@@ -101,7 +103,10 @@ export default function DashboardLayout() {
           whileTap={{ scale: 0.98 }}
           className="btn-secondary" 
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginTop: 'auto', border: '1px solid rgba(224, 108, 117, 0.3)', color: 'var(--text-muted)' }}
-          onClick={() => navigate('/')}
+          onClick={() => {
+            logout();
+            navigate('/');
+          }}
         >
           <LogOut size={18} />
           Sign Out

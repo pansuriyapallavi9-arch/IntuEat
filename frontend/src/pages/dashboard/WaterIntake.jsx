@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useContext, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
+import { UserContext } from '../../context/UserContext';
 
 export default function WaterIntake() {
-  const goal = 8;
-  const [glasses, setGlasses] = useState(3); // Mock state
+  const { waterIntake, macros, updateWaterIntake } = useContext(UserContext);
+  const [saving, setSaving] = useState(false);
+  const goal = waterIntake?.goal || macros?.waterGoals || 8;
+  const glasses = waterIntake?.glasses || 0;
+  const remaining = Math.max(goal - glasses, 0);
+  const percentage = useMemo(() => Math.min((glasses / goal) * 100, 100), [glasses, goal]);
 
-  const handleAdd = () => { if (glasses < goal) setGlasses(glasses + 1) };
-  const handleRemove = () => { if (glasses > 0) setGlasses(glasses - 1) };
+  const persistGlasses = async (nextGlasses) => {
+    setSaving(true);
+    try {
+      await updateWaterIntake({ glasses: nextGlasses, goal });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const percentage = (glasses / goal) * 100;
+  const handleAdd = () => {
+    if (glasses < goal && !saving) persistGlasses(glasses + 1);
+  };
+  const handleRemove = () => {
+    if (glasses > 0 && !saving) persistGlasses(glasses - 1);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -48,7 +64,7 @@ export default function WaterIntake() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
-          <button className="btn-secondary" style={{ borderRadius: '50%', padding: 'var(--space-3)', border: 'none', background: 'var(--bg-glass)' }} onClick={handleRemove}>
+          <button className="btn-secondary" style={{ borderRadius: '50%', padding: 'var(--space-3)', border: 'none', background: 'var(--bg-glass)' }} onClick={handleRemove} disabled={saving || glasses <= 0}>
             <Minus size={24} />
           </button>
           
@@ -56,13 +72,13 @@ export default function WaterIntake() {
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)' }}>{glasses} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ {goal} Glasses</span></div>
           </div>
 
-          <button className="btn-secondary" style={{ borderRadius: '50%', padding: 'var(--space-3)', border: 'none', background: 'var(--primary)', color: '#fff' }} onClick={handleAdd}>
+          <button className="btn-secondary" style={{ borderRadius: '50%', padding: 'var(--space-3)', border: 'none', background: 'var(--primary)', color: '#fff' }} onClick={handleAdd} disabled={saving || glasses >= goal}>
             <Plus size={24} />
           </button>
         </div>
 
         <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-          {glasses === goal ? "Awesome! You've hit your daily goal! 🎉" : `${goal - glasses} more glasses to reach your goal.`}
+          {glasses === goal ? "Awesome! You've hit your daily goal! 🎉" : `${remaining} more glasses to reach your goal.`}
         </p>
 
       </div>

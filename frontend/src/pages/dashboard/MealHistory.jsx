@@ -22,6 +22,11 @@ export default function MealHistory() {
               <div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 'var(--space-1)' }}>{meal.date || 'Today'} • <span style={{ textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 600 }}>{meal.type}</span></div>
                 <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: 'var(--space-1)' }}>{meal.name}</h3>
+                {(meal.source === 'barcode' || meal.barcode || meal.brand) && (
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 'var(--space-1)' }}>
+                    {[meal.brand, meal.barcode ? `Barcode ${meal.barcode}` : null].filter(Boolean).join(' • ')}
+                  </div>
+                )}
                 <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', gap: 'var(--space-3)' }}>
                    <span>{meal.cals} kcal</span>
                    <span>P: {meal.protein}g</span>

@@ -14,7 +14,7 @@ export default function DeficiencySuggestions() {
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/agent/suggestions', {
+        const response = await fetch('/api/agent/suggestions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ deficiencies, history })

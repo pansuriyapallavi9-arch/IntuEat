@@ -6,6 +6,8 @@ import { UserContext } from '../../context/UserContext';
 export default function PersonalInfo() {
   const { user, macros, saveProfile } = useContext(UserContext);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   
   // Set fallback state if user context is empty initially
   const [data, setData] = useState(user || {
@@ -25,19 +27,33 @@ export default function PersonalInfo() {
 
   const handleChange = (e) => setData({ ...data, [e.target.name]: e.target.value });
 
-  const handleSave = () => {
-    saveProfile(data);
-    setIsEditing(false);
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await saveProfile(data);
+      setIsEditing(false);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)' }}>
         <h1 className="title-gradient" style={{ fontSize: '2.5rem' }}>Personal Profile</h1>
-        <button className="btn-secondary" onClick={() => isEditing ? handleSave() : setIsEditing(true)} style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-          {isEditing ? <><Save size={18}/> Save Profile</> : <><Edit2 size={18}/> Edit Profile</>}
+        <button className="btn-secondary" onClick={() => isEditing ? handleSave() : setIsEditing(true)} style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }} disabled={saving}>
+          {isEditing ? <><Save size={18}/> {saving ? 'Saving...' : 'Save Profile'}</> : <><Edit2 size={18}/> Edit Profile</>}
         </button>
       </div>
+
+      {error && (
+        <div className="glass-panel" style={{ border: '1px solid var(--error)', color: 'var(--error)', marginBottom: 'var(--space-4)' }}>
+          {error}
+        </div>
+      )}
 
       <div className="glass-panel" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)' }}>
         <div><label className="label">Full Name</label><input type="text" name="name" value={data.name} onChange={handleChange} disabled={!isEditing} className="input-field" /></div>

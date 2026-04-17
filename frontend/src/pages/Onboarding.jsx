@@ -1,16 +1,18 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { UserContext } from '../context/UserContext';
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { saveProfile } = useContext(UserContext);
+  const { saveProfile, user } = useContext(UserContext);
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const totalSteps = 5;
 
   const [formData, setFormData] = useState({
-    name: '',
+    name: user?.name || '',
     age: '',
     height: '',
     weight: '',
@@ -46,9 +48,17 @@ export default function Onboarding() {
     else submitData();
   };
 
-  const submitData = () => {
-    saveProfile(formData);
-    navigate('/dashboard');
+  const submitData = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      await saveProfile(formData);
+      navigate('/dashboard');
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -150,10 +160,14 @@ export default function Onboarding() {
             </div>
           )}
 
+          {error && (
+            <div style={{ marginTop: 'var(--space-3)', color: 'var(--error)', textAlign: 'center' }}>{error}</div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-5)' }}>
              {step > 1 ? <button className="btn-secondary" onClick={() => setStep(step - 1)}>Back</button> : <div />}
-            <button className="btn-primary" onClick={handleNext}>
-              {step === totalSteps ? 'Complete Profile' : 'Next Step'}
+            <button className="btn-primary" onClick={handleNext} disabled={submitting}>
+              {submitting ? 'Saving...' : step === totalSteps ? 'Complete Profile' : 'Next Step'}
             </button>
           </div>
         </motion.div>

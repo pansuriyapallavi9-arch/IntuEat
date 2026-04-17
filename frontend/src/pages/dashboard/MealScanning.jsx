@@ -10,6 +10,7 @@ export default function MealScanning() {
   const [mealType, setMealType] = useState('lunch');
   const [weight, setWeight] = useState('');
   const [showWeightPrompt, setShowWeightPrompt] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { addMealToHistory } = useContext(UserContext);
 
   const handleImageUpload = (e) => {
@@ -31,7 +32,7 @@ export default function MealScanning() {
     setShowWeightPrompt(false);
     try {
       // Activating Backend Multimodal Agent
-      const response = await fetch('http://localhost:5000/api/agent/meal-analysis', {
+      const response = await fetch('/api/agent/meal-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imagePreview, weight })
@@ -53,21 +54,29 @@ export default function MealScanning() {
     }
   };
 
-  const saveMeal = () => {
+  const saveMeal = async () => {
     if (result) {
-      addMealToHistory({
-        date: new Date().toLocaleDateString() + ', ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        type: mealType,
-        name: result.name,
-        cals: result.calories,
-        protein: result.protein,
-        carbs: result.carbs,
-        fat: result.fat,
-        score: result.score
-      });
-      alert(`Saved ${result.name} to '${mealType}' history!`);
-      setImagePreview(null);
-      setResult(null);
+      setSaving(true);
+      try {
+        await addMealToHistory({
+          date: new Date().toLocaleDateString() + ', ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          type: mealType,
+          name: result.name,
+          cals: result.calories,
+          protein: result.protein,
+          carbs: result.carbs,
+          fat: result.fat,
+          score: result.score,
+          source: 'meal-scan',
+        });
+        alert(`Saved ${result.name} to '${mealType}' history!`);
+        setImagePreview(null);
+        setResult(null);
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -165,6 +174,17 @@ export default function MealScanning() {
               </div>
             </div>
 
+            {result.fallback && (
+              <div style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', background: 'rgba(242, 206, 141, 0.18)', border: '1px solid rgba(220, 174, 120, 0.35)', color: 'var(--text-main)' }}>
+                {result.fallbackMessage || 'This result is a generic fallback estimate because Gemini is temporarily unavailable.'}
+                {result.geminiError?.message && (
+                  <div style={{ marginTop: 'var(--space-2)', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    Gemini error{result.geminiError.status ? ` (${result.geminiError.status})` : ''}: {result.geminiError.message}
+                  </div>
+                )}
+              </div>
+            )}
+
             {result.suggestions && result.suggestions.length > 0 && (
               <div style={{ marginBottom: 'var(--space-4)', textAlign: 'left' }}>
                 <h4 style={{ color: 'var(--text-main)', marginBottom: 'var(--space-2)' }}>💡 Creative Pairing Ideas</h4>
@@ -192,8 +212,8 @@ export default function MealScanning() {
               </select>
             </div>
 
-            <button className="btn-primary" style={{ width: '100%' }} onClick={saveMeal}>
-              <CheckCircle size={18} /> Save to History
+            <button className="btn-primary" style={{ width: '100%' }} onClick={saveMeal} disabled={saving}>
+              <CheckCircle size={18} /> {saving ? 'Saving...' : 'Save to History'}
             </button>
           </motion.div>
         )}
