@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getGroq, VISION_MODEL, TEXT_MODEL, chatJSON } from '@/lib/groq';
+import { getGroq, VISION_MODEL, TEXT_MODEL, SEARCH_MODEL, chatJSON } from '@/lib/groq';
 import { healthScore } from '@/lib/nutrition';
+import { searchFoodNutrition } from '@/lib/openfoodfacts';
 import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+
+// Flips to true if the Groq key can't use the compound (web-search) model, so we stop
+// paying its latency on every request and go straight to the base text model.
+let webSearchDisabled = false;
 
 // Prompt for photo / single-item mode (weight is known in grams)
 const VISION_SYSTEM = `You are IntuEat's expert nutritionist AI vision agent.
@@ -38,6 +43,8 @@ How to interpret it:
 - Prices/currency are only a weak hint about portion size (e.g. a "₹20 Thumbs Up" is a small bottle).
   NEVER treat money as calories.
 - SUM every item into TOTAL nutrition for the whole meal described.
+- If "VERIFIED REFERENCE DATA" is supplied below, trust those per-100g label values over your own
+  estimate for that item. If you have web-search results, use them for accurate brand/portion data.
 - "foodName" is a short human summary of the order (e.g. "2 Medium Pizzas + Thumbs Up").
 - "score" is a 0-10 healthiness rating for the overall meal.
 - Give exactly 2 specific, encouraging suggestions to balance this meal (each reason < 160 chars).
@@ -80,6 +87,24 @@ export async function POST(request) {
     );
   }
 
+  // ---- Grounding: verified label data from OpenFoodFacts (free, no key) ----
+  // For a named/described food, pull real per-100g values so the AI anchors to them.
+  const groundingQuery = isTextMode ? description.trim() : foodName;
+  let verified = null;
+  if (groundingQuery) {
+    const hit = await searchFoodNutrition(groundingQuery);
+    if (hit) {
+      verified = { source: 'OpenFoodFacts', ...hit };
+    }
+  }
+  const referenceText = verified
+    ? `\n\nVERIFIED REFERENCE DATA (OpenFoodFacts) for "${verified.productName}"${
+        verified.brand ? ` by ${verified.brand}` : ''
+      }: per 100g — ${verified.per100g.calories} kcal, ${verified.per100g.protein}g protein, ` +
+      `${verified.per100g.carbs}g carbs, ${verified.per100g.fat}g fat. Use these exact per-100g ` +
+      `values for this item and scale to the actual quantity eaten.`
+    : '';
+
   // Build the request depending on mode
   let model;
   let messages;
@@ -88,7 +113,7 @@ export async function POST(request) {
     model = TEXT_MODEL;
     messages = [
       { role: 'system', content: TEXT_SYSTEM },
-      { role: 'user', content: `The user ate: "${description.trim()}". Analyze the whole meal.` },
+      { role: 'user', content: `The user ate: "${description.trim()}". Analyze the whole meal.${referenceText}` },
     ];
   } else {
     const weightVal = Math.max(1, parseFloat(weight) || 100);
@@ -97,7 +122,7 @@ export async function POST(request) {
         type: 'text',
         text: `Analyze this meal.${
           foodName ? ` The user says it is: "${foodName}".` : ''
-        } Calculate nutrition for exactly ${weightVal} grams.`,
+        } Calculate nutrition for exactly ${weightVal} grams.${referenceText}`,
       },
     ];
     if (image) userContent.push({ type: 'image_url', image_url: { url: image } });
@@ -110,12 +135,38 @@ export async function POST(request) {
   }
 
   try {
-    const parsed = await chatJSON(groq, {
-      model,
-      temperature: 0.3,
-      maxTokens: 3072,
-      messages,
-    });
+    // Text meals go through the web-search-enabled compound model first (it can look up
+    // live nutrition for unknown brands/dishes), falling back to the base model if the
+    // key lacks compound access or it errors. Photo mode always uses the vision model.
+    let parsed;
+    let webSearched = false;
+
+    if (isTextMode && !webSearchDisabled) {
+      try {
+        parsed = await chatJSON(groq, {
+          model: SEARCH_MODEL,
+          reasoning: false, // compound models don't accept reasoning_effort
+          temperature: 0.3,
+          maxTokens: 3072,
+          messages,
+        });
+        webSearched = true;
+      } catch (e) {
+        if (e?.status === 429) throw e; // rate limited — don't hammer the fallback too
+        // Model unavailable / not permitted on this key → disable and use base model.
+        webSearchDisabled = true;
+        console.warn('Web-search model unavailable, falling back to TEXT_MODEL:', e?.message);
+      }
+    }
+
+    if (!parsed) {
+      parsed = await chatJSON(groq, {
+        model,
+        temperature: 0.3,
+        maxTokens: 3072,
+        messages,
+      });
+    }
 
     const detected = parsed.foodName || foodName || description || 'Food';
     const name = isTextMode
@@ -133,6 +184,9 @@ export async function POST(request) {
         parsed.score != null ? Number(Number(parsed.score).toFixed(1)) : healthScore(parsed),
       items: Array.isArray(parsed.items) ? parsed.items.slice(0, 12) : [],
       suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 3) : [],
+      // Grounding info so the UI can show how the numbers were verified.
+      webSearched,
+      verifiedSource: verified?.source || null,
     };
 
     return NextResponse.json(result);

@@ -19,7 +19,21 @@ export const metadata = {
   title: 'IntuEat — AI Nutrition Coach',
   description:
     'Snap a photo, know your macros. IntuEat is your AI-powered, mindful eating companion.',
-  manifest: undefined,
+  applicationName: 'IntuEat',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'IntuEat',
+    statusBarStyle: 'default',
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport = {
@@ -27,6 +41,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
 };
 

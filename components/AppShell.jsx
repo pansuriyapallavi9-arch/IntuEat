@@ -7,6 +7,7 @@ import {
   Home, Clock, Droplets, Sparkles, User, Plus, Sprout, LogOut,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import InstallPrompt from '@/components/InstallPrompt';
 
 const NAV = [
   { href: '/dashboard', label: 'Home', icon: Home },
@@ -114,6 +115,8 @@ export default function AppShell({ name, children }) {
 
         {BOTTOM_RIGHT.map((item) => <BottomItem key={item.href} item={item} active={isActive(item.href)} />)}
       </nav>
+
+      <InstallPrompt />
     </div>
   );
 }

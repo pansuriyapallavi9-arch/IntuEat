@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { CheckCircle, Loader2, RotateCcw } from 'lucide-react';
+import { CheckCircle, Loader2, RotateCcw, Globe, BadgeCheck } from 'lucide-react';
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -25,6 +25,23 @@ export default function MealResult({ result, mealType, setMealType, onSave, savi
           <div className="text-[10px] font-semibold uppercase">Health</div>
         </div>
       </div>
+
+      {(result.webSearched || result.verifiedSource) && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {result.verifiedSource && (
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              style={{ background: 'var(--bg-glass)', color: 'var(--primary)' }}>
+              <BadgeCheck size={13} /> Verified · {result.verifiedSource}
+            </span>
+          )}
+          {result.webSearched && (
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              style={{ background: 'var(--bg-glass)', color: 'var(--water)' }}>
+              <Globe size={13} /> Cross-checked with web search
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mb-4 grid grid-cols-2 gap-3">
         {macros.map((m) => (
