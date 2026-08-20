@@ -12,37 +12,33 @@ import Ring from '@/components/Ring';
 
 const MotionLink = motion.create(Link);
 
-// Premium "expo-out" easing — starts fast, settles softly. Used everywhere for a
-// consistent, deliberate feel rather than the default linear-ish fades.
-const EASE = [0.16, 1, 0.3, 1];
+// Soft "expo-out" easing.
+const EASE = [0.22, 1, 0.36, 1];
 
-// Reveal-on-scroll for single blocks (spread onto a motion element).
+// All reveals use ONLY opacity + translate (GPU-composited, cheap on mobile) and run
+// once. No blur/filter transitions and no infinite loops — those are what janked mobile.
 const reveal = {
-  initial: { opacity: 0, y: 26 },
+  initial: { opacity: 0, y: 16 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-80px' },
-  transition: { duration: 0.75, ease: EASE },
+  viewport: { once: true, margin: '-40px' },
+  transition: { duration: 0.45, ease: EASE },
 };
 
 // Stagger parent + child variants for grids and the hero column.
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.1, delayChildren: 0.06 } },
+  show: { transition: { staggerChildren: 0.06 } },
 };
 const rise = {
-  hidden: { opacity: 0, y: 26, filter: 'blur(8px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.8, ease: EASE } },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
 };
 const cardIn = {
-  hidden: { opacity: 0, y: 22, scale: 0.97 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 130, damping: 18, mass: 0.7 } },
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
 };
-// Tactile press for buttons.
-const pop = {
-  whileHover: { scale: 1.03, y: -2 },
-  whileTap: { scale: 0.96 },
-  transition: { type: 'spring', stiffness: 400, damping: 18 },
-};
+// Tactile press for buttons (tap only — no hover work on mobile).
+const pop = { whileTap: { scale: 0.97 } };
 
 const FEATURES = [
   {
@@ -199,18 +195,14 @@ export default function Landing() {
           </motion.p>
         </motion.div>
 
-        {/* App preview mockup — slides in, then floats with a soft animated glow */}
+        {/* App preview mockup — simple fade/slide in, static soft glow (painted once) */}
         <motion.div
-          initial={{ opacity: 0, x: 44, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{ duration: 0.9, ease: EASE, delay: 0.15 }}
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
           className="relative flex justify-center">
-          <motion.div aria-hidden className="pointer-events-none absolute -inset-8 -z-10"
-            style={{ background: 'radial-gradient(circle at 50% 42%, rgba(108,154,106,0.38), transparent 70%)', filter: 'blur(44px)' }}
-            animate={{ scale: [1, 1.12, 1], opacity: [0.55, 0.9, 0.55] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} />
-          <motion.div animate={{ y: [0, -12, 0] }} transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}>
-            <AppPreview />
-          </motion.div>
+          <div aria-hidden className="pointer-events-none absolute inset-4 -z-10"
+            style={{ background: 'radial-gradient(circle at 50% 42%, rgba(108,154,106,0.28), transparent 70%)' }} />
+          <AppPreview />
         </motion.div>
       </section>
 
@@ -226,9 +218,7 @@ export default function Landing() {
         <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }}
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
-            <motion.div key={f.title} variants={cardIn}
-              whileHover={{ y: -6, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-              className="glass p-6">
+            <motion.div key={f.title} variants={cardIn} className="glass p-6">
               <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl"
                 style={{ background: 'var(--bg-glass)' }}>
                 <f.icon size={24} color="var(--primary)" />
@@ -257,9 +247,7 @@ export default function Landing() {
         <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }}
           className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {AI_STACK.map((a) => (
-            <motion.div key={a.title} variants={cardIn}
-              whileHover={{ y: -6, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-              className="glass flex gap-4 p-6">
+            <motion.div key={a.title} variants={cardIn} className="glass flex gap-4 p-6">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white"
                 style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
                 <a.icon size={22} />
@@ -365,19 +353,15 @@ export default function Landing() {
             {/* Home-screen icon illustration */}
             <div className="flex justify-center">
               <div className="flex flex-col items-center gap-3">
-                <motion.div
-                  animate={{ y: [0, -10, 0], rotate: [-2, 2, -2] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                <div
                   className="flex h-28 w-28 items-center justify-center rounded-[26px] shadow-lg"
                   style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))', boxShadow: 'var(--shadow-glow)' }}>
                   <Sprout size={56} color="#fff" />
-                </motion.div>
+                </div>
                 <span className="text-sm font-bold">IntuEat</span>
                 <div className="mt-1 flex gap-1.5">
                   {[0, 1, 2, 3].map((i) => (
-                    <motion.span key={i} className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--border-medium)' }}
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }} />
+                    <span key={i} className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--border-medium)' }} />
                   ))}
                 </div>
               </div>
@@ -425,7 +409,7 @@ function AppPreview() {
   ];
   return (
     <motion.div
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.55 } } }}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.25 } } }}
       initial="hidden" animate="show"
       className="glass w-full max-w-[300px] p-5" style={{ boxShadow: 'var(--shadow-md)' }}>
       <motion.div variants={cardIn} className="mb-4 flex items-center justify-between">
